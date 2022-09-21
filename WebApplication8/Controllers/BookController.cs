@@ -37,7 +37,7 @@ namespace WebApplication8.Controllers
         {
             var model = new BookAuthorViewModel
             {
-                Authors = authorRepository.List().ToList()
+                Authors = FillSelectList()
             };
             return View(model);
         }
@@ -49,6 +49,16 @@ namespace WebApplication8.Controllers
         {
             try
             {
+
+                if(model.AuthorId == -1)
+                {
+                    ViewBag.Message = "Please select an author from the list";
+                    var vmodel = new BookAuthorViewModel
+                    {
+                        Authors = FillSelectList()
+                    };
+                    return View(vmodel);
+                }
                 var author = authorRepository.FindById(model.AuthorId);
                 Book book = new Book
                 {
@@ -71,17 +81,33 @@ namespace WebApplication8.Controllers
         public ActionResult Edit(int id)
         {
             var book = bookRepository.FindById(id);
-            return View(book);
+            int authorId = book.Author == null ? book.Author.Id = 0 : book.Author.Id;
+            var viewModel= new BookAuthorViewModel
+            {
+                BookId = book.Id,
+                Title = book.Title,
+                Description = book.Description,
+                AuthorId = authorId,
+                Authors = authorRepository.List().ToList()
+            };
+            return View(viewModel);
         }
 
         // POST: BookController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, Book book)
+        public ActionResult Edit(int id,BookAuthorViewModel model)
         {
             try
             {
-                bookRepository.Update(id, book);
+                var author = authorRepository.FindById(model.AuthorId);
+                Book book = new Book
+                {
+                    Title = model.Title,
+                    Description = model.Description,
+                    Author = author
+                };
+                    bookRepository.Update(model.BookId, book);
                 return RedirectToAction(nameof(Index));
             }
             catch
@@ -100,7 +126,7 @@ namespace WebApplication8.Controllers
         // POST: BookController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, Book book)
+        public ActionResult ConfirmDelete(int id)
         {
             try
             {
@@ -111,6 +137,12 @@ namespace WebApplication8.Controllers
             {
                 return View();
             }
+        }
+        List<Author> FillSelectList()
+        {
+            var authors = authorRepository.List().ToList();
+            authors.Insert(0, new Author { Id = -1, Name = " --- Please select an author --- " });
+            return authors;
         }
     }
 }
