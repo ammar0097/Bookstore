@@ -21,6 +21,7 @@ namespace WebApplication8.Models.Repositories
         }
         public void Add(Author entity)
         {
+            entity.Id = authors.Max(a => a.Id) + 1;
             authors.Add(entity);
         }
 
